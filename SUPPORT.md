@@ -1,7 +1,6 @@
 ## **Details** <br>
 **Java version:** 20<br>
 **AWS SDK libraries version:** 2.17.123<br>
-**Maven version:** <br>
 
 ## **Setup**
 1. Open/Install your preferred Java IDE 
