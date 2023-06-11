@@ -1,9 +1,11 @@
-## **Details** <br>
+# Support <br>
+This article has information to implement the EC2 Price Calculator. <br>
+## Details <br>
 **Java version:** 20<br>
 **AWS SDK libraries version:** 2.17.123<br>
 **Maven version:** Maven 3<br>
 
-## **Setup**
+## Setup
 1. Open/Install your preferred Java IDE 
 2. Create an AWS Account (https://aws.amazon.com/)
 3. Install the AWS toolkit in your IDE ([AWS in IntelliJ IDEA](https://www.youtube.com/watch?v=KvBFFDYaqSM))
