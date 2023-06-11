@@ -32,7 +32,7 @@ public class EC2Main {
                 String resp = response.toString();
                 String terms = resp.substring(resp.indexOf("terms"));
                 String price = terms.substring(terms.indexOf("pricePerUnit"));
-                System.out.println("→→→ " + instanceType + " price per hour: " + price.substring(14, price.indexOf("}") + 1));
+                System.out.println("--> " + instanceType + " price per hour: " + price.substring(14, price.indexOf("}") + 1));
                 System.out.print("Continue? (y/n): ");
                 cont = input.nextLine();
 
