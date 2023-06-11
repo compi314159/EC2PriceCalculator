@@ -1,12 +1,15 @@
 package org.example;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Scanner;
 import software.amazon.awssdk.services.pricing.PricingClient;
 import software.amazon.awssdk.services.pricing.model.*;
 
 public class EC2Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws MalformedURLException {
         Scanner input = new Scanner(System.in);
         ProfileCredentialsProvider credentialsProvider = ProfileCredentialsProvider.create();
 
@@ -33,7 +36,15 @@ public class EC2Main {
                 System.out.print("Continue? (y/n): ");
                 cont = input.nextLine();
 
-            } catch (Exception e) {
+            } catch (StringIndexOutOfBoundsException e) {
+                System.out.println("Error: " + e);
+                URL EC2Types = new URL("https://aws.amazon.com/ec2/instance-types/");
+                System.out.print("Please enter valid instance type (see " + EC2Types + "), try again? (y/n): ");
+                cont = input.nextLine();
+            }
+            catch (Exception e)
+            {
+                System.out.println("Error: " + e);
                 System.out.print("Invalid entry, try again? (y/n): ");
                 cont = input.nextLine();
             }
