@@ -1,5 +1,6 @@
 # EC2PriceCalculator
 Calculates price of AWS EC2 Instance Types
+
 ## Details <br>
 **Java version:** 20<br>
 **AWS SDK libraries version:** 2.17.123<br>
@@ -16,3 +17,9 @@ Calculates price of AWS EC2 Instance Types
 8. Install the AWS toolkit in your IDE ([AWS in IntelliJ IDEA](https://www.youtube.com/watch?v=KvBFFDYaqSM))
 9. Insert your IAM user credentials (Access Key ID and Secret Key - found under Security Credentials tab in the Management Console) in the config file under "[profile user1]" 
 10. Download and run provided JAR file or source code
+
+## Usage
+* Run the program
+* Enter EC2 Instance Type when prompted
+* If an error is thrown, it will be displayed along with necessary fixes
+* Prompt will appear to find the price of another instance type - input "y" for yes or "n" for no when prompted
