@@ -15,4 +15,4 @@ Calculates price of AWS EC2 Instance Types
 7. Add AmazonEC2FullAccess and AWSPriceListServiceFullAccess to the IAM user under "Permissions"
 8. Install the AWS toolkit in your IDE ([AWS in IntelliJ IDEA](https://www.youtube.com/watch?v=KvBFFDYaqSM))
 9. Insert your IAM user credentials (Access Key ID and Secret Key - found under Security Credentials tab in the Management Console) in the config file under "[profile user1]" 
-10. Create a new Maven project and use provided source code
+10. Download and run provided JAR file or source code
