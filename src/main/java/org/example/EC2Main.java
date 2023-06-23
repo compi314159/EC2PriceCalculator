@@ -1,17 +1,24 @@
 package org.example;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
-import java.net.MalformedURLException;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URL;
+import java.util.Properties;
 import java.util.Scanner;
 import software.amazon.awssdk.services.pricing.PricingClient;
 import software.amazon.awssdk.services.pricing.model.*;
 import redis.clients.jedis.Jedis;
 
 public class EC2Main {
-    public static void main(String[] args) throws MalformedURLException {
+    public static void main(String[] args) throws IOException {
+        // read properties
+        Properties prop = new Properties();
+        FileInputStream ip = new FileInputStream("C:\\Users\\singe\\IdeaProjects\\EC2PriceCalculator\\config.properties");
+        prop.load(ip);
+
         // connect to jedis
-        Jedis jedis = new Jedis("redis://default:8GICzgZMnQdshTOrtW6DMOyWgosU6Ng7@redis-17504.c91.us-east-1-3.ec2.cloud.redislabs.com:17504");
+        Jedis jedis = new Jedis("redis://"+prop.getProperty("redisUser")+":"+prop.getProperty("redisPass")+"@redis-17504.c91.us-east-1-3.ec2.cloud.redislabs.com:17504");
         jedis.connect();
 
         // check if connection is successful
