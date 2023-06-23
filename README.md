@@ -29,5 +29,6 @@ Calculates price of AWS EC2 Instance Types
 ## Usage
 * Run the program
 * Enter EC2 Instance Type when prompted
+* The program will attempt to get the price from the database - if it is not already there, the price will be retrieved using the AWS library and added to the database
 * If an error is thrown, it will be displayed along with necessary fixes
 * Prompt will appear to find the price of another instance type - input "y" for yes or "n" for no when prompted
