@@ -1,6 +1,8 @@
 package org.example;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
+
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -14,11 +16,12 @@ public class EC2Main {
     public static void main(String[] args) throws IOException {
         // read properties
         Properties prop = new Properties();
-        FileInputStream ip = new FileInputStream("C:\\Users\\singe\\IdeaProjects\\EC2PriceCalculator\\config.properties");
-        prop.load(ip);
+        File configuration = new File("src/main/resources/config.properties");
+        prop.load(new FileInputStream(configuration));
 
         // connect to jedis
-        Jedis jedis = new Jedis("redis://"+prop.getProperty("redisUser")+":"+prop.getProperty("redisPass")+"@redis-17504.c91.us-east-1-3.ec2.cloud.redislabs.com:17504");
+        Jedis jedis = new Jedis("redis://" + prop.getProperty("redisUser")+":" + prop.getProperty("redisPass")
+                + "@" + prop.getProperty("redisPublicEndpoint"));
         jedis.connect();
 
         // check if connection is successful
@@ -54,19 +57,16 @@ public class EC2Main {
                 System.out.println("--> " + instanceType + " price per hour: " + price);
                 System.out.print("Continue? (y/n): ");
                 cont = input.nextLine();
-
             }
             catch (StringIndexOutOfBoundsException e)
             {
                 System.out.println("Error: " + e);
                 URL EC2Types = new URL("https://aws.amazon.com/ec2/instance-types/");
-                System.out.print("Please enter valid instance type (see " + EC2Types + "), try again? (y/n): ");
-                cont = input.nextLine();
+                System.out.println("Please enter valid instance type (see " + EC2Types + ").");
             }
             catch (Exception e) {
                 System.out.println("Error: " + e);
-                System.out.print("Invalid entry, try again? (y/n): ");
-                cont = input.nextLine();
+                System.out.println("Invalid entry, please try again.");
             }
         }
     }
@@ -90,11 +90,11 @@ public class EC2Main {
                             .type("TERM_MATCH").build()).maxResults(1).build();
 
             GetProductsResponse response = pricingClient.getProducts(request);
+
             // Get price
             String resp = response.toString();
             String terms = resp.substring(resp.indexOf("terms"));
             String price = terms.substring(terms.indexOf("pricePerUnit"));
             return price.substring(14, price.indexOf("}") + 1);
     }
-
 }
