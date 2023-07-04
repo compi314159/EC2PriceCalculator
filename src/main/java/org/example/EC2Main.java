@@ -1,17 +1,25 @@
 package org.example;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.json.simple.parser.ParseException;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
+import java.net.URLConnection;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
 import software.amazon.awssdk.services.pricing.PricingClient;
 import software.amazon.awssdk.services.pricing.model.*;
 import redis.clients.jedis.Jedis;
-
+//
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+//
 public class EC2Main {
     public static void main(String[] args) throws IOException {
         // read properties
@@ -43,6 +51,44 @@ public class EC2Main {
             String instanceType = input.nextLine().trim();
             try
             {
+                // json work starts here
+
+                URL json = new URL("https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/us-east-1/index.json");
+                ObjectMapper mapper = new ObjectMapper();
+                Map<String,Object> map = mapper.readValue(json, Map.class);
+                JSONObject job = new JSONObject(map);
+                parse(job.toString());
+                System.out.println(job.get("version"));
+
+//                String strJson = getJSONFromURL("https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/us-east-1/index.json");
+//                try {
+//                    JSONParser parser = new JSONParser();
+//                    Object object = parser.parse(strJson);
+//                    JSONObject mainJsonObject = (JSONObject) object;
+//
+//                    /*************** First Name ****************/
+//                    String firstName = (String) mainJsonObject.get("formatVersion");
+//                    System.out.println("First Name : " + 1);
+//                    }
+//
+//                catch(Exception ex) {
+//                    ex.printStackTrace();
+//                }
+
+
+
+            //String jsonString = stream(json);
+                //jsonString = jsonString.substring(jsonString.indexOf(instanceType),jsonString.indexOf(instanceType)+10);
+                //System.out.println(jsonString);
+               /* JSONArray jsonArr = new JSONArray(data);
+
+                JSONObject jsnobject = new JSONObject(readlocationFeed);
+
+                JSONArray jsonArray = jsnobject.getJSONArray("locations");
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    JSONObject explrObject = jsonArray.getJSONObject(i);
+                }*/
+                // json work ends here
                 String price;
                 if(!(getAWSCost(jedis, instanceType) == null))
                 {
@@ -96,5 +142,79 @@ public class EC2Main {
             String terms = resp.substring(resp.indexOf("terms"));
             String price = terms.substring(terms.indexOf("pricePerUnit"));
             return price.substring(14, price.indexOf("}") + 1);
+    }
+    public static String stream(URL url) {
+        try (InputStream input = url.openStream()) {
+            InputStreamReader isr = new InputStreamReader(input);
+            BufferedReader reader = new BufferedReader(isr);
+            StringBuilder json = new StringBuilder();
+            int c;
+            while ((c = reader.read()) != -1) {
+                json.append((char) c);
+            }
+            return json.toString();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public static String getJSONFromURL(String strUrl) {
+        String jsonText = "";
+
+        try {
+            URL url = new URL(strUrl);
+            InputStream is = url.openStream();
+
+            BufferedReader bufferedReader =
+                    new BufferedReader(new InputStreamReader(is));
+
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                jsonText += line + "\n";
+            }
+
+            is.close();
+            bufferedReader.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+        return jsonText;
+    }
+    public static void parse(String string)
+    {
+        JSONParser parser = new JSONParser();
+
+        try {
+            URL oracle = new URL("://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/us-east-1/index.json"); // URL to Parse
+
+            URLConnection yc = oracle.openConnection();
+            BufferedReader in = new BufferedReader(new InputStreamReader(yc.getInputStream()));
+
+            String inputLine;
+            while ((inputLine = in.readLine()) != null) {
+                JSONArray a = (JSONArray) parser.parse(inputLine);
+
+                // Loop through each item
+                for (Object o : a) {
+                    JSONObject tutorials = (JSONObject) o;
+
+                    Long id = (Long) tutorials.get("sku");
+                    System.out.println("Post ID : " + id);
+
+                    String title = (String) tutorials.get("productFamily");
+                    System.out.println("Post Title : " + title);
+
+                    System.out.println("\n");
+                }
+            }
+            in.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
     }
 }
