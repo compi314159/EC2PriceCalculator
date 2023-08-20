@@ -51,8 +51,9 @@ public class EC2Main
 
         System.out.println("\n*** EC2 Instance Type Calculator ***");
         System.out.println("Region: us-east-1 (N. Virginia)");
-        System.out.println();
-        System.out.println("OPTIONS:");
+        String cont = "y";
+        while (cont.equalsIgnoreCase("y")) {
+        System.out.println("\nOPTIONS:");
         System.out.println("1. Instance Type Price");
         System.out.println("2. Data Transfer Price");
         System.out.print("Select option: ");
@@ -61,13 +62,12 @@ public class EC2Main
         try {
             option = Integer.parseInt(optionString);
         } catch (Exception e) {
-            option = 1;
-            System.out.println("Invalid entry, option defaulted to 1");
+            option = 0;
+            System.out.print("Invalid entry, start over? (y/n): ");
+            cont = input.nextLine();
         }
         if(option == 1)
         {
-            String cont = "y";
-            while (cont.equalsIgnoreCase("y")) {
                 System.out.print("\nEnter EC2 instance type: ");
                 String instanceType = input.nextLine().trim();
                 System.out.println("\nOperating Systems: ");
@@ -129,7 +129,7 @@ public class EC2Main
                     System.out.print("Invalid entry, try again? (y/n): ");
                     cont = input.nextLine();
                 }
-            }
+
         }
         else if(option == 2) {
             System.out.print("Search for region? (y/n): ");
@@ -137,12 +137,13 @@ public class EC2Main
             if(selection.equalsIgnoreCase("y"))
             {
                 System.out.print("Enter location keyword: ");
-                String keyword = input.nextLine();
+                String keyword = input.nextLine().toLowerCase();
                 System.out.println("Locations containing \"" + keyword + "\":");
                 boolean contains = false;
                 for(Map.Entry<String, Double> entry : transferCosts.entrySet())
                 {
-                    if(entry.getKey().toLowerCase().contains(keyword.toLowerCase()))
+                    String key = entry.getKey().toLowerCase();
+                    if(key.contains(keyword))
                     {
                         System.out.println(entry.getKey());
                         contains = true;
@@ -159,13 +160,15 @@ public class EC2Main
             double out;
             try {
                 out = getTransferCost(finish);
+                System.out.println("Outbound Cost: $" + out + " per GB");
+                System.out.print("Continue? (y/n): ");
+                cont = input.nextLine();
             }
             catch(Exception e)
             {
-                System.out.println("Invalid location, location defaulted to US East (Ohio)");
-                out = 0.01;
-            }
-            System.out.println("Outbound Cost: $" + out + " per GB");
+                System.out.print("Invalid location, start over? (y/n): ");
+                cont = input.nextLine();
+            }}
         }
     }
 
@@ -297,38 +300,5 @@ public class EC2Main
         } else {
             System.out.println("JSON file already downloaded.");
         }
-    }
-
-    private static void createFile(JSONObject instances) throws IOException {
-        File f = new File("new.json");
-        System.out.print("\nJSON file download status: ");
-        if (!f.exists() || f.isDirectory()) 
-        {
-            BufferedWriter writer = new BufferedWriter(new FileWriter("new.json"));
-            writer.write(instances.toString());
-            writer.close();
-            System.out.println("new JSON file successfully created.");
-        } 
-        else 
-        {
-            System.out.println("new JSON file already created.");
-        }
-    }
-
-
-    // get cost from AWS - no longer used - incorrect prices
-    public static String getInstantAWSCost(String instanceType, PricingClient pricingClient)
-    {
-            GetProductsRequest request = GetProductsRequest.builder().serviceCode("AmazonEC2")
-                    .filters(Filter.builder().field("instanceType").value(instanceType)
-                            .type("TERM_MATCH").build()).maxResults(1).build();
-
-            GetProductsResponse response = pricingClient.getProducts(request);
-
-            // Get price
-            String resp = response.toString();
-            String terms = resp.substring(resp.indexOf("terms"));
-            String price = terms.substring(terms.indexOf("pricePerUnit"));
-            return price.substring(14, price.indexOf("}") + 1);
     }
 }
