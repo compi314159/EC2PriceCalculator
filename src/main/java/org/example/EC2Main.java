@@ -6,6 +6,7 @@ import software.amazon.awssdk.regions.Region;
 import java.io.*;
 import java.net.URL;
 
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.Scanner;
 import software.amazon.awssdk.services.pricing.PricingClient;
@@ -23,8 +24,8 @@ import java.util.Map.Entry;
 public class EC2Main
 {
     public static boolean found = false;
-    public static void main(String[] args) throws IOException
-    {
+    public static Map<String, Double> transferCosts = new HashMap<String, Double>();
+    public static void main(String[] args) throws IOException {
         // read properties
         Properties prop = new Properties();
         File configuration = new File("src/main/resources/config.properties");
@@ -36,8 +37,7 @@ public class EC2Main
         jedis.connect();
 
         // check if connection is successful
-        if (jedis.ping().equalsIgnoreCase("pong"))
-        {
+        if (jedis.ping().equalsIgnoreCase("pong")) {
             System.out.println("Connection successful");
         }
 
@@ -47,16 +47,31 @@ public class EC2Main
         PricingClient pricingClient = PricingClient.builder().region(Region.US_EAST_1)
                 .credentialsProvider(credentialsProvider).build();
 
-        System.out.println("\n*** EC2 Instance Type Price Calculator ***");
+        addTransferCosts();
 
-
-        String cont = "y";
-        while (cont.equalsIgnoreCase("y"))
+        System.out.println("\n*** EC2 Instance Type Calculator ***");
+        System.out.println("Region: us-east-1 (N. Virginia)");
+        System.out.println();
+        System.out.println("OPTIONS:");
+        System.out.println("1. Instance Type Price");
+        System.out.println("2. Data Transfer Price");
+        System.out.print("Select option: ");
+        String optionString = input.nextLine();
+        int option;
+        try {
+            option = Integer.parseInt(optionString);
+        } catch (Exception e) {
+            option = 1;
+            System.out.println("Invalid entry, option defaulted to 1");
+        }
+        if(option == 1)
         {
-            System.out.print("\nEnter EC2 instance type: ");
-            String instanceType = input.nextLine().trim();
-            System.out.println("\nOperating Systems: ");
-            System.out.println("\t1 - Windows");
+            String cont = "y";
+            while (cont.equalsIgnoreCase("y")) {
+                System.out.print("\nEnter EC2 instance type: ");
+                String instanceType = input.nextLine().trim();
+                System.out.println("\nOperating Systems: ");
+                System.out.println("\t1 - Windows");
                 System.out.println("\t2 - RHEL");
                 System.out.println("\t3 - SUSE");
                 System.out.println("\t4 - Linux");
@@ -65,82 +80,149 @@ public class EC2Main
                 System.out.print("Select operating system: ");
                 String selection = input.nextLine();
                 int choice;
-                try
-                {
+                try {
                     choice = Integer.parseInt(selection);
-                }
-                catch(Exception e)
-                {
+                } catch (Exception e) {
                     choice = 0;
                 }
                 String os = "";
-                if(choice == 1)
-                {
+                if (choice == 1) {
                     os = "Windows";
-                }
-                else if(choice == 2)
-                {
+                } else if (choice == 2) {
                     os = "RHEL";
-                }
-                else if(choice == 3)
-                {
+                } else if (choice == 3) {
                     os = "SUSE";
-                }
-                else if(choice == 4)
-                {
+                } else if (choice == 4) {
                     os = "Linux";
-                }
-                else if(choice == 5)
-                {
+                } else if (choice == 5) {
                     os = "Red Hat Enterprise Linux with HA";
-                }
-                else if(choice == 6)
-                {
+                } else if (choice == 6) {
                     os = "Ubuntu Pro";
-                }
-                else
-                {
+                } else {
                     System.out.println("Invalid entry, operating system defaulted to Windows");
                     os = "Windows";
                 }
 
-            try
-            {
-                String price;
-                if (!(getAWSCost(jedis, instanceType, os) == null))
-                {
-                    price = getAWSCost(jedis, instanceType, os);
-                    System.out.println("Successfully found in database!");
-                }
-                else
-                {
-                    System.out.println("\nNot found in database. Receiving from json file.");
-                    price = getJSONCost(instanceType, os);
-                    if (!found)
-                    {
-                        URL EC2Types = new URL("https://aws.amazon.com/ec2/instance-types/");
-                        System.out.println("Instance type with given operating system does not exist, please enter valid instance type.");
-                        System.out.println("Also make sure it exists with selected operating system (see " + EC2Types + ").");
+                try {
+                    String price;
+                    if (!(getAWSCost(jedis, instanceType, os) == null)) {
+                        price = getAWSCost(jedis, instanceType, os);
+                        System.out.println("Successfully found in database!");
+                    } else {
+                        System.out.println("\nNot found in database. Receiving from json file.");
+                        price = getJSONCost(instanceType, os);
+                        if (!found) {
+                            URL EC2Types = new URL("https://aws.amazon.com/ec2/instance-types/");
+                            System.out.println("Instance type with given operating system does not exist, please enter valid instance type.");
+                            System.out.println("Also make sure it exists with selected operating system (see " + EC2Types + ").");
+                        }
+                        addAWSCost(jedis, instanceType, os, price);
                     }
-                    addAWSCost(jedis, instanceType, os, price);
+                    System.out.println("--> " + instanceType + " with " + os + " operating system price per hour: $" + price);
+                    System.out.print("Continue? (y/n): ");
+                    cont = input.nextLine();
+                } catch (ParseException e) {
+                    throw new RuntimeException(e);
+                } catch (Exception e) {
+                    System.out.println("Error: " + e);
+                    input.nextLine();
+                    System.out.print("Invalid entry, try again? (y/n): ");
+                    cont = input.nextLine();
                 }
-                System.out.println("--> " + instanceType + " with " + os + " operating system price per hour: $" + price);
-                System.out.print("Continue? (y/n): ");
-                cont = input.nextLine();
-            }
-            catch (ParseException e)
-            {
-                throw new RuntimeException(e);
-            }
-            catch (Exception e)
-            {
-                System.out.println("Error: " + e);
-                input.nextLine();
-                System.out.print("Invalid entry, try again? (y/n): ");
-                cont = input.nextLine();
             }
         }
+        else if(option == 2) {
+            System.out.print("Search for region? (y/n): ");
+            String selection = input.nextLine();
+            if(selection.equalsIgnoreCase("y"))
+            {
+                System.out.print("Enter location keyword: ");
+                String keyword = input.nextLine();
+                System.out.println("Locations containing \"" + keyword + "\":");
+                boolean contains = false;
+                for(Map.Entry<String, Double> entry : transferCosts.entrySet())
+                {
+                    if(entry.getKey().toLowerCase().contains(keyword.toLowerCase()))
+                    {
+                        System.out.println(entry.getKey());
+                        contains = true;
+                    }
+                }
+                if(!contains)
+                {
+                    System.out.println("No locations found");
+                }
+            }
+            System.out.println();
+            System.out.print("Enter transfer region: ");
+            String finish = input.nextLine();
+            double out;
+            try {
+                out = getTransferCost(finish);
+            }
+            catch(Exception e)
+            {
+                System.out.println("Invalid location, location defaulted to US East (Ohio)");
+                out = 0.01;
+            }
+            System.out.println("Outbound Cost: $" + out + " per GB");
+        }
     }
+
+    private static void addTransferCosts() {
+        transferCosts.put("AWS GovCloud (US-West)", 0.02);
+        transferCosts.put("AWS GovCloud (US-East)", 0.02);
+        transferCosts.put("Africa (Cape Town)", 0.02);
+        transferCosts.put("Asia Pacific (Hong Kong)", 0.02);
+        transferCosts.put("Asia Pacific (Hyderabad)", 0.02);
+        transferCosts.put("Asia Pacific (Jakarta)", 0.02);
+        transferCosts.put("Asia Pacific (Melbourne)", 0.02);
+        transferCosts.put("Asia Pacific (Mumbai)", 0.02);
+        transferCosts.put("Asia Pacific (Osaka)", 0.02);
+        transferCosts.put("Asia Pacific (Seoul)", 0.02);
+        transferCosts.put("Asia Pacific (Singapore)", 0.02);
+        transferCosts.put("Asia Pacific (Sydney)", 0.02);
+        transferCosts.put("Asia Pacific (Tokyo)", 0.02);
+        transferCosts.put("Canada (Central)", 0.02);
+        transferCosts.put("Europe (Frankfurt)", 0.02);
+        transferCosts.put("Europe (Ireland)", 0.02);
+        transferCosts.put("Europe (London)", 0.02);
+        transferCosts.put("Europe (Milan)", 0.02);
+        transferCosts.put("Europe (Paris)", 0.02);
+        transferCosts.put("Europe (Spain)", 0.02);
+        transferCosts.put("Europe (Stockholm)", 0.02);
+        transferCosts.put("Europe (Zurich)", 0.02);
+        transferCosts.put("Israel (Tel Aviv)", 0.02);
+        transferCosts.put("Middle East (Bahrain)", 0.02);
+        transferCosts.put("Middle East (UAE)", 0.02);
+        transferCosts.put("South America (Sao Paulo)", 0.02);
+        transferCosts.put("US East (Ohio)", 0.01);
+        transferCosts.put("US East (Verizon) - Nashville", 0.00);
+        transferCosts.put("US East (Verizon) - Tampa", 0.00);
+        transferCosts.put("US West (Los Angeles)", 0.02);
+        transferCosts.put("US West (N. California)", 0.02);
+        transferCosts.put("US West (Oregon)", 0.02);
+        transferCosts.put("Asia Pacific (KDDI) - Osaka", 0.02);
+        transferCosts.put("Asia Pacific (KDDI) - Tokyo", 0.02);
+        transferCosts.put("Asia Pacific (SKT) - Daejeon", 0.02);
+        transferCosts.put("Asia Pacific (SKT) - Seoul", 0.02);
+        transferCosts.put("Canada (BELL) - Toronto", 0.02);
+        transferCosts.put("Europe (Vodafone) - London", 0.02);
+        transferCosts.put("Europe (Vodafone) - Manchester", 0.02);
+        transferCosts.put("US West (Verizon) - Denver", 0.02);
+        transferCosts.put("US West (Verizon) - Las Vegas", 0.02);
+        transferCosts.put("US West (Verizon) - Los Angeles", 0.02);
+        transferCosts.put("US West (Verizon) - Phoenix", 0.02);
+        transferCosts.put("US West (Verizon) - San Francisco Bay Area", 0.02);
+        transferCosts.put("US West (Verizon) - Seattle", 0.02);
+    }
+
+    private static double getTransferCost(String finish) throws Exception {
+        double out;
+        out = transferCosts.get(finish.trim());
+        return out;
+    }
+
     // add cost to database
     private static void addAWSCost(Jedis jedis, String instanceType, String os, String price) {
     jedis.set(instanceType+","+os, price);
