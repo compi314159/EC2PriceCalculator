@@ -36,18 +36,7 @@ public class EC2Main
         addTransferLocations();
 
         System.out.println("\n*** EC2 Instance Type Calculator ***");
-        System.out.println("Enter Cloud Provider: ");
-        System.out.println("AWS Regions: " +
-                "\n\tus-east-2, us-east-1, us-west-1, us-west-2, af-south-1, " +
-                "\n\tap-east-1, ap-south-2, ap-southeast-3, ap-southeast-4, " +
-                "\n\tap-south-1, ap-northeast-3, ap-northeast-2, ap-southeast-1, " +
-                "\n\tap-southeast-2, ap-northeast-1, ca-central-1, eu-central-1, " +
-                "\n\teu-west-1, eu-west-2, eu-south-1, eu-west-3, eu-south-2, " +
-                "\n\teu-north-1, eu-central-2, il-central-1, me-south-1, " +
-                "\n\tme-central-1, sa-east-1, us-gov-east-1, us-gov-west-1");
-        System.out.print("Select AWS Region: ");
-        String region = input.nextLine().trim();
-        System.out.println("Region: " + region);
+        String region = "us-east-1";
         String cont = "y";
         while (cont.equalsIgnoreCase("y")) {
         System.out.println("\nOPTIONS:");
@@ -183,7 +172,6 @@ public class EC2Main
             System.out.println();
             System.out.print("Enter destination location: ");
             String finish = input.nextLine();
-            /////////////////////////////////////
             try {
                 String cost;
                 if (!(getTransferCost(jedis, start, finish) == null)) {
@@ -282,7 +270,7 @@ public class EC2Main
     }
     // get cost from json file
     public static String getJSONCost(String instanceType, String os, String region) throws IOException, ParseException {
-        downloadFile(region); // call method to download json file
+        downloadFile(); // call method to download json file
 
         Object obj = new JSONParser().parse(new FileReader("index.json"));
         JSONObject json = (JSONObject) obj;
@@ -311,7 +299,7 @@ public class EC2Main
         return getPriceWithSKU(onDemand, sku);
     }
     public static String getJSONTransferCost(String start, String finish, String region) throws IOException, ParseException {
-    downloadFile(region); // call method to download json file
+    downloadFile(); // call method to download json file
 
     Object obj = new JSONParser().parse(new FileReader("index.json"));
     JSONObject json = (JSONObject) obj;
@@ -361,11 +349,11 @@ public class EC2Main
         return price1;
     }
     // download json file
-    private static void downloadFile(String region) throws IOException {
+    private static void downloadFile() throws IOException {
         File f = new File("index.json");
         System.out.print("JSON file download status: ");
         if (!f.exists() || f.isDirectory()) {
-            URL url = new URL("https://pricing."+region+ ".amazonaws.com/offers/v1.0/aws/AmazonEC2/current/" + region + "/index.json");
+            URL url = new URL("https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/us-east-1/index.json");
             BufferedReader readr =
                     new BufferedReader(new InputStreamReader(url.openStream()));
 
